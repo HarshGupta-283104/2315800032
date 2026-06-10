@@ -14,3 +14,49 @@ const data = [
   { ID: "7", Type: "Event", Message: "farewell party", Timestamp: "2026-06-10 16:45:00" },
   { ID: "8", Type: "Event", Message: "tech fest", Timestamp: "2026-06-09 14:30:00" }
 ];
+
+const weights = { Placement: 100, Result: 50, Event: 10 };
+
+function getRecency(timestamp) {
+  const age = (new Date() - new Date(timestamp)) / (1000 * 60 * 60);
+  return 100 * Math.exp(-age / 24);
+}
+
+function getScore(notif) {
+  const weight = weights[notif.Type] || 0;
+  const recency = getRecency(notif.Timestamp);
+  return { weight, recency, total: weight + recency };
+}
+
+function addScore(notif) {
+  const s = getScore(notif);
+  return { ...notif, score: s.total.toFixed(2), weight: s.weight, recency: s.recency.toFixed(2) };
+}
+
+async function getNotifications() {
+  try {
+    const res = await axios.get(API, { timeout: 5000 });
+    return res.data.notifications || data;
+  } catch (err) {
+    return data;
+  }
+}
+
+app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
+app.get('/api/notifications', async (req, res) => {
+  const notifs = await getNotifications();
+  const scored = notifs.map(addScore);
+  const sorted = scored.sort((a, b) => b.score - a.score);
+  const top10 = sorted.slice(0, 10);
+  res.json(top10);
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`\n✅ Server running on http://localhost:${PORT}\n`);
+});
