@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Priority Inbox</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      gap: 20px;
+    }
+    
+    h1 {
+      text-align: center;
+      color: black;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+    
+    .notifications {
+      display: grid;
+      gap: 15px;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .rank {
+      display: inline-block;
+      background: #667eea;
+      color: rgb(255, 255, 255);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .type {
+      display: inline-block;
+      margin-left: 10px;
+      font-size: 1.5em;
+    }
+    
+    .message {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #333;
+    }
+    
+    .score-box {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    
+    .score {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+      font-size: 0.95em;
+      color: black
+    }
+    
+    .total-score {
+      font-weight: bold;
+      color: #667eea;
+      font-size: 1.1em;
+      margin-top: 8px;
+    }
+    
+    .emoji {
+      margin-right: 5px;
+    }
+    
+    .loading {
+      text-align: center;
+      color: white;
+      font-size: 1.2em;
+      padding: 40px;
+    }
+    
+    .error {
+      background: #ff6b6b;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏆 Priority Inbox</h1>
+    <div id="notifications" class="loading">Loading...</div>
+  </div>
+
+  <script>
+    const emojis = {
+      Placement: '💼',
+      Result: '📝',
+      Event: '🎉'
+    };
+
+    async function loadNotifications() {
+      try {
+        const response = await fetch('/api/notifications');
+        const notifs = await response.json();
+        
+        const html = notifs.map((n, i) => `
+          <div class="card">
+            <div>
+              <span class="rank">#${i + 1}</span>
+              <span class="type">${emojis[n.Type] || '📌'}</span>
+            </div>
+            <div class="message">${n.Message}</div>
+            <div class="score-box">
+              <div class="score">
+                <span>Type: ${n.Type}</span>
+                <span>${n.Timestamp}</span>
+              </div>
+              <div class="score">
+                <span>Weight Score:</span>
+                <span>${n.weight}</span>
+              </div>
+              <div class="score">
+                <span>Recency Score:</span>
+                <span>${n.recency}</span>
+              </div>
+              <div class="total-score">Total Score: ${n.score} ⭐</div>
+            </div>
+          </div>
+        `).join('');
+        
+        document.getElementById('notifications').innerHTML = html;
+      } catch (err) {
+        document.getElementById('notifications').innerHTML = `
+          <div class="error">Failed to load notifications</div>
+        `;
+      }
+    }
+
+    loadNotifications();
+  </script>
+</body>
+</html>
